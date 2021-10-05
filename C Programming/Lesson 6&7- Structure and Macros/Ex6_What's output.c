@@ -1,7 +1,3 @@
-/*
-	Author : Ahmed Mohammed
-	Purpose: get the radius of the circle and print the area.
-*/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,7 +7,7 @@ union job{
 	int worker_no;
 } u;
 
-union job1{
+struct job1{
 	char name[32];
 	float salary;
 	int worker_no;
