@@ -1,0 +1,7 @@
+00000004 C g
+0000000c T HardFault_handler
+00000018 T main
+00000000 R MyHeight
+00000004 D MyName
+00000000 T NMI_handler
+00000000 D ORD_Reg

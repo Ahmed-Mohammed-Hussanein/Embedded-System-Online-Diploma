@@ -1,0 +1,3 @@
+080000cc t _reset
+08000044 T main
+080000d2 t Vector_handler
