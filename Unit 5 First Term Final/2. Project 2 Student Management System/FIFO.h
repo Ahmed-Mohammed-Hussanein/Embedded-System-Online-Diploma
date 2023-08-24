@@ -48,7 +48,4 @@ FIFO_STATUS FIFO_Dequeue(FIFO_t *FIFO_buffer, element_type *item);
 FIFO_STATUS FIFO_Is_empty(FIFO_t *FIFO_buffer);
 FIFO_STATUS FIFO_Is_full(FIFO_t *FIFO_buffer);
 
-
-
-
 #endif

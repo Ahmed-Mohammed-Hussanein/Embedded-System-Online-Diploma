@@ -16,7 +16,7 @@ static void print_data(sStudent_Data_t *xStudent)
 	printf("Student Roll ID: %hu\n", xStudent->Roll_Id);
 	printf("Student Name: %s %s\n", xStudent->FirstName, xStudent->LastName);
 	printf("Student GPA: %f\n", xStudent->GPA);
-	
+
 	uint8_t i;
 	for(i = 0; i < 5; ++i)
 	{
@@ -49,72 +49,108 @@ static void get_data_from_file(FILE *p2File)
 
 	while(!feof(p2File))
 	{	
-	fscanf(p2File, "%u %s %s %f %hu %hu %hu %hu %hu", &newStudent.Roll_Id, newStudent.FirstName, newStudent.LastName,
-		&newStudent.GPA, &newStudent.CourseId[0], &newStudent.CourseId[1], &newStudent.CourseId[2], &newStudent.CourseId[3],
-		&newStudent.CourseId[4]
+		fscanf(p2File, "%u %s %s %f %hu %hu %hu %hu %hu", &newStudent.Roll_Id, newStudent.FirstName, newStudent.LastName,
+				&newStudent.GPA, &newStudent.CourseId[0], &newStudent.CourseId[1], &newStudent.CourseId[2], &newStudent.CourseId[3],
+				&newStudent.CourseId[4]
 		);
 
-	isExist = search(dataBase.base, dataBase.count, newStudent.Roll_Id);
-	if(isExist != -1)
-	{
-		printf("This ID %u is already in use.\n", newStudent.Roll_Id);
-		print_line();
-		continue;
-	}
-	
-	print_data(&newStudent);
-	FIFO_Enqueue(&dataBase, &newStudent);
+		isExist = search(dataBase.base, dataBase.count, newStudent.Roll_Id);
+		if(isExist != -1)
+		{
+			printf("\nThis ID %u is already in use.\n\n", newStudent.Roll_Id);
+			print_line();
+			continue;
+		}
+
+		print_data(&newStudent);
+		FIFO_Enqueue(&dataBase, &newStudent);
 	}
 }
 
-static void get_data_from_sdin(sStudent_Data_t *xStudent, uint8_t updateFlag)
+static inline void set_roll_number(sStudent_Data_t *xStudent)
 {
-	uint8_t temp[32];
+	uint8_t temp[8];
+	uint32_t tempId;
 
 	printf("Enter Student Roll ID: ");
 
 	fflush(stdin), fflush(stdout);
-	fgets(temp, 32, stdin);
-	xStudent->Roll_Id = atoi(temp);
+	fgets(temp, 8, stdin);
+	tempId = atoi(temp);
 
-	sint32_t isExist = search(dataBase.base, dataBase.count, xStudent->Roll_Id);
+	sint32_t isExist = search(dataBase.base, dataBase.count, tempId);
 
 	while(isExist != -1)
 	{
-		printf("ID %u is already exist.\n", xStudent->Roll_Id);
+		printf("\nID %u is already exist.\n\n", tempId);
 		printf("Enter Another Roll ID: ");
 
 		fflush(stdin), fflush(stdout);
-		fgets(temp, 32, stdin);
-		xStudent->Roll_Id = atoi(temp);
+		fgets(temp, 8, stdin);
+		tempId = atoi(temp);
 
-		isExist = search(dataBase.base, dataBase.count, xStudent->Roll_Id);
+		isExist = search(dataBase.base, dataBase.count, tempId);
 	}
 
+	xStudent->Roll_Id = tempId;
+}
+
+static inline void set_fname(sStudent_Data_t *xStudent)
+{
+	uint8_t temp[32];
+
 	printf("Enter Student First Name: ");
-	
+
 	fflush(stdin), fflush(stdout);
 	scanf("%s", xStudent->FirstName);
+}
+
+static inline void set_lname(sStudent_Data_t *xStudent)
+{
+	uint8_t temp[32];
 
 	printf("Enter Student Last Name: ");
-	
+
 	fflush(stdin), fflush(stdout);
 	scanf("%s", xStudent->LastName);
+}
+
+static inline void set_GPA(sStudent_Data_t *xStudent)
+{
+	uint8_t temp[8];
 
 	printf("Enter Student GPA: ");
 
 	fflush(stdin), fflush(stdout);
-	fgets(temp, 32, stdin);
+	fgets(temp, 8, stdin);
 	xStudent->GPA = atof(temp);
+}
+
+static inline void set_course_ID(sStudent_Data_t *xStudent, uint8_t courseID)
+{
+	uint8_t temp[8];
+
+	printf("Enter Student Course %u ID: ", courseID+1);
+
+	fflush(stdin), fflush(stdout);
+	fgets(temp, 8, stdin);
+	xStudent->CourseId[courseID] = atoi(temp);
+}
+
+static void get_data_from_stdin(sStudent_Data_t *xStudent)
+{
+	set_roll_number(xStudent);
+
+	set_fname(xStudent);
+
+	set_lname(xStudent);
+
+	set_GPA(xStudent);
 
 	uint8_t i;
 	for(i = 0; i < 5; ++i)
 	{
-		printf("Enter Student Course %u ID: ", i+1);
-
-		fflush(stdin), fflush(stdout);
-		fgets(temp, 32, stdin);
-		xStudent->CourseId[i] = atoi(temp);
+		set_course_ID(xStudent, i);
 	}
 }
 
@@ -158,7 +194,7 @@ eStatus_t DB_Add(FILE *p2File)
 	if(p2File == stdin)
 	{
 		sStudent_Data_t newStudent;
-		get_data_from_sdin(&newStudent, 0);
+		get_data_from_stdin(&newStudent);
 
 		FIFO_Enqueue(&dataBase, &newStudent);
 	}
@@ -170,7 +206,7 @@ eStatus_t DB_Add(FILE *p2File)
 	return DB_OK;
 }
 
-eStatus_t DB_updateStudent(uint32_t rollNumber)
+eStatus_t DB_updateStudent(uint32_t rollNumber, uint8_t updateOption)
 {
 	FIFO_STATUS status = FIFO_Is_empty(&dataBase);
 	if(status == FIFO_null)
@@ -186,10 +222,60 @@ eStatus_t DB_updateStudent(uint32_t rollNumber)
 	{
 		if(dataBase.base[i].Roll_Id == rollNumber)
 		{
+			printf("Student Information.\n\n");
 			print_data(&dataBase.base[i]);
-			memset(&dataBase.base[i], 0, sizeof(sStudent_Data_t));
-			get_data_from_sdin(&tempStudent, 1);
-			dataBase.base[i] = tempStudent;
+			switch(updateOption)
+			{
+			case 1:
+				set_fname(&dataBase.base[i]);
+				break;
+
+			case 2:
+				set_lname(&dataBase.base[i]);
+				break;
+
+			case 3:
+				dataBase.base[i].Roll_Id = 0;
+				set_roll_number(&dataBase.base[i]);
+				break;
+
+			case 4:
+				set_GPA(&dataBase.base[i]);
+				break;
+
+			case 6:
+				dataBase.base[i].Roll_Id = 0;
+				get_data_from_stdin(&dataBase.base[i]);
+				break;
+
+			case 7:
+				set_course_ID(&dataBase.base[i], 0);
+				break;
+
+			case 8:
+				set_course_ID(&dataBase.base[i], 1);
+				break;
+
+			case 9:
+				set_course_ID(&dataBase.base[i], 2);
+				break;
+
+			case 10:
+				set_course_ID(&dataBase.base[i], 3);
+				break;
+
+			case 11:
+				set_course_ID(&dataBase.base[i], 4);
+				break;
+
+			case 12:
+				set_course_ID(&dataBase.base[i], 0);
+				set_course_ID(&dataBase.base[i], 1);
+				set_course_ID(&dataBase.base[i], 2);
+				set_course_ID(&dataBase.base[i], 3);
+				set_course_ID(&dataBase.base[i], 4);
+				break;
+			}
 			return DB_OK;
 		}
 	}
@@ -211,6 +297,7 @@ eStatus_t DB_deleteStudent(uint32_t rollNumber)
 	{
 		if(dataBase.base[i].Roll_Id == rollNumber)
 		{
+			printf("\n\nStudent Information.\n\n");
 			print_data(&dataBase.base[i]);
 			shift_left(&dataBase.base[0], i);
 			return DB_OK;
@@ -234,12 +321,13 @@ eStatus_t DB_Find_rollNumber(uint32_t rollNumber)
 	{
 		if(dataBase.base[i].Roll_Id == rollNumber)
 		{
+			printf("\nStudent Information\n\n");
 			print_data(&dataBase.base[i]);
 			return DB_OK;
 		}
 	}
 
-	
+
 	return DB_NOT_FOUND;
 }
 
@@ -259,13 +347,14 @@ eStatus_t DB_Find_fName(uint8_t fname[])
 		if(!strcmp(dataBase.base[i].FirstName, fname))
 		{
 			flag = 1;
+			printf("\nStudent Information\n\n");
 			print_data(&dataBase.base[i]);
 		}
 	}
 
 	if(flag == 1)
 		return DB_OK;
-	
+
 	return DB_NOT_FOUND;
 }
 
@@ -287,6 +376,7 @@ eStatus_t DB_Find_courseID(uint32_t courseID)
 		{
 			if(dataBase.base[i].CourseId[j] == courseID)
 			{
+				printf("\nStudent Information\n\n");
 				print_data(&dataBase.base[i]);
 				flag = 1;
 			}

@@ -3,8 +3,6 @@
 
 #include <windows.h>
 
-
-
 void hide_cursor();
 void show_cursor();
 void set_cursor_position(int x, int y);

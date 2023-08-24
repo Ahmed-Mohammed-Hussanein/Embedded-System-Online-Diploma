@@ -4,7 +4,6 @@
 
 #include "GUI.h"
 
-
 void hide_cursor()
 {
    HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
